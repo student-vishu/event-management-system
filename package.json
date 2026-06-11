@@ -1,0 +1,25 @@
+{
+  "name": "event-management-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server-express": "^3.13.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.22.2",
+    "graphql": "^16.14.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.21.0",
+    "redis": "^6.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
