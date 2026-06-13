@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS event_invites (
+  id         SERIAL PRIMARY KEY,
+  event_id   INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  email      VARCHAR(255) NOT NULL,
+  user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
