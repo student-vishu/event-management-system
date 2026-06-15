@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 
 const EventModel = {
-  async create({ title, description, date, location, creatorId }) {
+  async createEvent({ title, description, date, location, creatorId }) {
     const { rows } = await pool.query(
       'INSERT INTO events (title, description, date, location, creator_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [title, description, date, location, creatorId]
@@ -9,16 +9,29 @@ const EventModel = {
     return rows[0];
   },
 
-  async findById(id) {
+  async findEventById(id) {
     const { rows } = await pool.query('SELECT * FROM events WHERE id = $1', [id]);
     return rows[0] || null;
   },
 
-  async update(id, { title, description, date, location }) {
-    const { rows } = await pool.query(
-      'UPDATE events SET title = $1, description = $2, date = $3, location = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
-      [title, description, date, location, id]
-    );
+  async updateEvent(id, fields) {
+    const allowed = ['title', 'description', 'date', 'location'];
+    const updates = [];
+    const values = [];
+
+    allowed.forEach((key) => {
+      if (key in fields) {
+        values.push(fields[key]);
+        updates.push(`${key} = $${values.length}`);
+      }
+    });
+
+    if (updates.length === 0) throw new Error('No fields to update');
+
+    values.push(id);
+    const query = `UPDATE events SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${values.length} RETURNING *`;
+
+    const { rows } = await pool.query(query, values);
     return rows[0];
   },
 
