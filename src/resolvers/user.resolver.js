@@ -9,7 +9,10 @@ const userResolvers = {
   },
 
   Mutation: {
-    register: (_, args) => userService.register(args),
+    register: (_, args) => {
+      console.log('Registering user with args resolver:', args);
+      return userService.register(args);
+    },
 
     login: (_, args) => userService.login(args),
 

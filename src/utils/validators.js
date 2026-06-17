@@ -2,19 +2,20 @@ const Joi = require('joi');
 
 const passwordRule = Joi.string()
   .min(5)
+  .pattern(/^\S+$/, 'no spaces')
   .pattern(/[A-Z]/, 'uppercase')
   .pattern(/[0-9]/, 'number')
   .pattern(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'special character')
   .required();
 
 const registerSchema = Joi.object({
-  name: Joi.string().min(2).required(),
-  email: Joi.string().email().required(),
+  name: Joi.string().trim().min(2).required(),
+  email: Joi.string().trim().email().required(),
   password: passwordRule,
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string().trim().email().required(),
   password: Joi.string().required(),
 });
 

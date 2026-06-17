@@ -8,17 +8,24 @@ const env = require('../config/env');
 const crypto = require('crypto');
 
 const register = async ({ name, email, password }) => {
+  console.log('Registering user with args service:', { name, email, password });
+
   validate(registerSchema, { name, email, password });
 
   const existing = await UserModel.findUserByEmail(email);
+  console.log('Existing user checkService:', existing);
+
   if (existing) throw new Error('Email already registered');
 
   const passwordHash = await hashPassword(password);
   const user = await UserModel.createUser({ name, email, passwordHash });
+  console.log('User createdService:', user);
 
   await InviteModel.linkUserToInvites(email, user.id);
 
   const token = generateToken({ userId: user.id });
+  console.log('Generated tokenService:', token);
+  
   return { token, user };
 };
 

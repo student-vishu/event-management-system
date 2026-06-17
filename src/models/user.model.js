@@ -12,10 +12,12 @@ const UserModel = {
   },
 
   async createUser({ name, email, passwordHash }) {
+    console.log('Create use called')
     const { rows } = await pool.query(
       'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
       [name, email, passwordHash]
     );
+    console.log('User created:', rows[0]);
     return rows[0];
   },
 
