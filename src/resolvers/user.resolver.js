@@ -16,9 +16,9 @@ const userResolvers = {
 
     login: (_, args) => userService.login(args),
 
-    logout: (_, __, { user, token, tokenExp }) => {
+    logout: (_, __, { user }) => {
       if (!user) throw new Error('Not authenticated');
-      return userService.logout(token, tokenExp);
+      return userService.logout(user.token, user.tokenExp);
     },
 
     changePassword: (_, args, { user }) => {

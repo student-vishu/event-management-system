@@ -1,6 +1,12 @@
 const eventService = require('../services/event.service');
 
 const eventResolvers = {
+  Event: {
+    creatorId: (event) => event.creator_id,
+    createdAt: (event) => event.created_at,
+    updatedAt: (event) => event.updated_at,
+  },
+
   Query: {
     listEvents: (_, args, { user }) => {
       if (!user) throw new Error('Not authenticated');

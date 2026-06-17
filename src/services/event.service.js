@@ -1,8 +1,11 @@
 const EventModel = require('../models/event.model');
 const InviteModel = require('../models/invite.model');
 const UserModel = require('../models/user.model');
+const { validate, createEventSchema, updateEventSchema, inviteUsersSchema } = require('../utils/validators');
 
 const createEvent = async (userId, { title, description, date, location }) => {
+  validate(createEventSchema, { title, description, date, location });
+
   const event = await EventModel.createEvent({
     title,
     description,
@@ -14,6 +17,8 @@ const createEvent = async (userId, { title, description, date, location }) => {
 };
 
 const updateEvent = async (userId, id, fields) => {
+  validate(updateEventSchema, fields);
+
   const event = await EventModel.findEventById(id);
   if (!event) throw new Error('Event not found');
   if (event.creator_id !== userId) throw new Error('Not authorized to update this event');
@@ -87,6 +92,8 @@ const eventDetail = async (userId, id) => {
 };
 
 const inviteUsers = async (userId, eventId, emails) => {
+  validate(inviteUsersSchema, { emails });
+
   const event = await EventModel.findEventById(eventId);
   if (!event) throw new Error('Event not found');
   if (event.creator_id !== userId) throw new Error('Not authorized to invite users to this event');
