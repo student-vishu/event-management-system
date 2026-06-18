@@ -1,10 +1,11 @@
 const { verifyToken } = require('../utils/jwt');
 const { get } = require('../services/redis.service');
 const UserModel = require('../models/user.model');
+const { AUTH } = require('../constants');
 
 const authMiddleware = async (req) => {
   const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const token = authHeader.startsWith(AUTH.BEARER_PREFIX) ? authHeader.slice(AUTH.BEARER_PREFIX_LENGTH) : null;
 
   if (!token) return null;
 
@@ -14,7 +15,7 @@ const authMiddleware = async (req) => {
   const decoded = verifyToken(token);
   const user = await UserModel.findUserById(decoded.userId);
 
-  return { ...user, token, tokenExp: decoded.exp };
+  return { ...user.toJSON(), token, tokenExp: decoded.exp };
 };
 
 module.exports = { authMiddleware };

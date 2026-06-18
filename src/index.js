@@ -4,9 +4,13 @@ const { expressMiddleware } = require('@apollo/server/express4');
 const typeDefs = require('./schema');
 const resolvers = require('./resolvers');
 const { authMiddleware } = require('./middleware/auth.middleware');
+const { sequelize } = require('./models');
 const env = require('./config/env');
 
 async function startServer() {
+  await sequelize.authenticate();
+  console.log('Database connected');
+
   const app = express();
 
   const server = new ApolloServer({

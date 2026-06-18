@@ -1,0 +1,4 @@
+module.exports = {
+  DEFAULT_PORT: 4000,
+  DEFAULT_RESET_TOKEN_EXPIRY: 900,
+};

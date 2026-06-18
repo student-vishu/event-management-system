@@ -1,7 +1,8 @@
 require('dotenv').config();
+const { ENV } = require('../constants');
 
 module.exports = {
-  port: process.env.PORT || 4000,
+  port: process.env.PORT || ENV.DEFAULT_PORT,
 
   db: {
     host: process.env.DB_HOST,
@@ -21,5 +22,5 @@ module.exports = {
     expiresIn: process.env.JWT_EXPIRES_IN,
   },
 
-  resetTokenExpiry: process.env.RESET_TOKEN_EXPIRY || 900,
+  resetTokenExpiry: process.env.RESET_TOKEN_EXPIRY || ENV.DEFAULT_RESET_TOKEN_EXPIRY,
 };

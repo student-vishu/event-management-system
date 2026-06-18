@@ -1,33 +1,40 @@
-const pool = require('../config/database');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const UserModel = {
-  async findUserByEmail(email) {
-    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    return rows[0] || null;
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-
-  async findUserById(id) {
-    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    return rows[0] || null;
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
-
-  async createUser({ name, email, passwordHash }) {
-    console.log('Create use called')
-    const { rows } = await pool.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
-      [name, email, passwordHash]
-    );
-    console.log('User created:', rows[0]);
-    return rows[0];
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
   },
-
-  async updatePassword(id, passwordHash) {
-    const { rows } = await pool.query(
-      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
-      [passwordHash, id]
-    );
-    return rows[0];
+  password_hash: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
-};
+}, {
+  tableName: 'users',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+});
 
-module.exports = UserModel;
+const findUserByEmail = (email) => User.findOne({ where: { email } });
+
+const findUserById = (id) => User.findByPk(id);
+
+const createUser = ({ name, email, passwordHash }) =>
+  User.create({ name, email, password_hash: passwordHash });
+
+const updatePassword = (id, passwordHash) =>
+  User.update({ password_hash: passwordHash }, { where: { id } });
+
+module.exports = { User, findUserByEmail, findUserById, createUser, updatePassword };

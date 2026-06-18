@@ -1,6 +1,11 @@
 const userService = require('../services/user.service');
 
 const userResolvers = {
+  User: {
+    createdAt: (user) => user.created_at,
+    updatedAt: (user) => user.updated_at,
+  },
+
   Query: {
     me: (_, __, { user }) => {
       if (!user) throw new Error('Not authenticated');
@@ -9,10 +14,7 @@ const userResolvers = {
   },
 
   Mutation: {
-    register: (_, args) => {
-      console.log('Registering user with args resolver:', args);
-      return userService.register(args);
-    },
+    register: (_, args) => userService.register(args),
 
     login: (_, args) => userService.login(args),
 

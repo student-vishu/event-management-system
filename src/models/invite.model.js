@@ -1,36 +1,39 @@
-const pool = require('../config/database');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const InviteModel = {
-  async createInvite({ eventId, email, userId }) {
-    const { rows } = await pool.query(
-      'INSERT INTO event_invites (event_id, email, user_id) VALUES ($1, $2, $3) RETURNING *',
-      [eventId, email, userId || null]
-    );
-    return rows[0];
+const Invite = sequelize.define('Invite', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-
-  async findInvitesByEmail(email) {
-    const { rows } = await pool.query(
-      'SELECT * FROM event_invites WHERE email = $1',
-      [email]
-    );
-    return rows;
+  event_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
-
-  async linkUserToInvites(email, userId) {
-    await pool.query(
-      'UPDATE event_invites SET user_id = $1 WHERE email = $2 AND user_id IS NULL',
-      [userId, email]
-    );
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
-
-  async findInvitesByEventId(eventId) {
-    const { rows } = await pool.query(
-      'SELECT * FROM event_invites WHERE event_id = $1',
-      [eventId]
-    );
-    return rows;
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
   },
-};
+}, {
+  tableName: 'event_invites',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: false,
+});
 
-module.exports = InviteModel;
+const createInvite = ({ eventId, email, userId }) =>
+  Invite.create({ event_id: eventId, email, user_id: userId || null });
+
+const findInvitesByEmail = (email) => Invite.findAll({ where: { email } });
+
+const linkUserToInvites = (email, userId) =>
+  Invite.update({ user_id: userId }, { where: { email, user_id: null } });
+
+const findInvitesByEventId = (eventId) => Invite.findAll({ where: { event_id: eventId } });
+
+module.exports = { Invite, createInvite, findInvitesByEmail, linkUserToInvites, findInvitesByEventId };

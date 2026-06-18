@@ -1,15 +1,16 @@
 const Joi = require('joi');
+const { VALIDATION } = require('../constants');
 
 const passwordRule = Joi.string()
-  .min(5)
-  .pattern(/^\S+$/, 'no spaces')
-  .pattern(/[A-Z]/, 'uppercase')
-  .pattern(/[0-9]/, 'number')
-  .pattern(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'special character')
+  .min(VALIDATION.PASSWORD_MIN_LENGTH)
+  .pattern(VALIDATION.NO_SPACES_REGEX, 'no spaces')
+  .pattern(VALIDATION.HAS_UPPERCASE_REGEX, 'uppercase')
+  .pattern(VALIDATION.HAS_NUMBER_REGEX, 'number')
+  .pattern(VALIDATION.HAS_SPECIAL_CHAR_REGEX, 'special character')
   .required();
 
 const registerSchema = Joi.object({
-  name: Joi.string().trim().min(2).required(),
+  name: Joi.string().trim().min(VALIDATION.NAME_MIN_LENGTH).required(),
   email: Joi.string().trim().email({ tlds: { allow: false } }).required(),
   password: passwordRule,
 });
@@ -31,23 +32,23 @@ const updatePasswordSchema = Joi.object({
 
 const titleRule = Joi.string()
   .trim()
-  .min(2)
-  .max(100)
-  .pattern(/^[a-zA-Z0-9\s\-_,.'!&()]+$/, 'valid title characters')
-  .pattern(/[a-zA-Z]/, 'at least one letter')
+  .min(VALIDATION.TITLE_MIN_LENGTH)
+  .max(VALIDATION.TITLE_MAX_LENGTH)
+  .pattern(VALIDATION.VALID_TITLE_CHARS_REGEX, 'valid title characters')
+  .pattern(VALIDATION.HAS_LETTER_REGEX, 'at least one letter')
   .required();
 
 const descriptionRule = Joi.string()
   .trim()
-  .min(1)
-  .max(500)
+  .min(VALIDATION.DESC_MIN_LENGTH)
+  .max(VALIDATION.DESC_MAX_LENGTH)
   .optional();
 
 const locationRule = Joi.string()
   .trim()
-  .min(2)
-  .max(100)
-  .pattern(/^[a-zA-Z0-9\s\-_,.'()]+$/, 'valid location characters')
+  .min(VALIDATION.LOCATION_MIN_LENGTH)
+  .max(VALIDATION.LOCATION_MAX_LENGTH)
+  .pattern(VALIDATION.VALID_LOCATION_CHARS_REGEX, 'valid location characters')
   .optional();
 
 const createEventSchema = Joi.object({

@@ -1,7 +1,10 @@
+const { QueryTypes } = require('sequelize');
+const sequelize = require('../config/database');
 const EventModel = require('../models/event.model');
 const InviteModel = require('../models/invite.model');
 const UserModel = require('../models/user.model');
 const { validate, createEventSchema, updateEventSchema, inviteUsersSchema } = require('../utils/validators');
+const { EVENT } = require('../constants');
 
 const createEvent = async (userId, { title, description, date, location }) => {
   validate(createEventSchema, { title, description, date, location });
@@ -26,55 +29,55 @@ const updateEvent = async (userId, id, fields) => {
   return EventModel.updateEvent(id, fields);
 };
 
-const listEvents = async (userId, { page = 1, limit = 10, search, sortBy = 'date', sortOrder = 'DESC', dateFrom, dateTo }) => {
-  const offset = (page - 1) * limit;
-  const allowedSortFields = ['date', 'title', 'created_at'];
-  const allowedSortOrders = ['ASC', 'DESC'];
+const listEvents = async (userId, { page = EVENT.DEFAULT_PAGE, limit = EVENT.DEFAULT_LIMIT, search, sortBy = EVENT.DEFAULT_SORT_BY, sortOrder = EVENT.DEFAULT_SORT_ORDER, dateFrom, dateTo }) => {
+  const safePage = Math.max(1, parseInt(page) || EVENT.DEFAULT_PAGE);
+  const safeLimit = Math.min(Math.max(1, parseInt(limit) || EVENT.DEFAULT_LIMIT), EVENT.MAX_LIMIT);
+  const offset = (safePage - 1) * safeLimit;
 
-  const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'date';
-  const safeSortOrder = allowedSortOrders.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+  const safeSortBy = EVENT.ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : EVENT.DEFAULT_SORT_BY;
+  const safeSortOrder = EVENT.ALLOWED_SORT_ORDERS.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : EVENT.DEFAULT_SORT_ORDER;
 
-  const conditions = ['(e.creator_id = $1 OR ei.user_id = $1)'];
-  const values = [userId];
+  const conditions = ['(e.creator_id = :userId OR ei.user_id = :userId)'];
+  const replacements = { userId, limit: safeLimit, offset };
 
   if (search) {
-    values.push(`%${search}%`);
-    conditions.push(`(e.title ILIKE $${values.length} OR e.description ILIKE $${values.length})`);
+    replacements.search = `%${search}%`;
+    conditions.push('(e.title ILIKE :search OR e.description ILIKE :search)');
   }
 
   if (dateFrom) {
-    values.push(dateFrom);
-    conditions.push(`e.date >= $${values.length}`);
+    replacements.dateFrom = dateFrom;
+    conditions.push('e.date >= :dateFrom');
   }
 
   if (dateTo) {
-    values.push(dateTo);
-    conditions.push(`e.date <= $${values.length}`);
+    replacements.dateTo = dateTo;
+    conditions.push('e.date <= :dateTo');
   }
 
   const where = conditions.join(' AND ');
 
-  const { rows: events } = await require('../config/database').query(
+  const events = await sequelize.query(
     `SELECT DISTINCT e.* FROM events e
      LEFT JOIN event_invites ei ON ei.event_id = e.id
      WHERE ${where}
      ORDER BY e.${safeSortBy} ${safeSortOrder}
-     LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
-    [...values, limit, offset]
+     LIMIT :limit OFFSET :offset`,
+    { replacements, type: QueryTypes.SELECT }
   );
 
-  const { rows: countRows } = await require('../config/database').query(
-    `SELECT COUNT(DISTINCT e.id) FROM events e
+  const countResult = await sequelize.query(
+    `SELECT COUNT(DISTINCT e.id) as count FROM events e
      LEFT JOIN event_invites ei ON ei.event_id = e.id
      WHERE ${where}`,
-    values
+    { replacements, type: QueryTypes.SELECT }
   );
 
   return {
     events,
-    total: parseInt(countRows[0].count),
-    page,
-    limit,
+    total: parseInt(countResult[0].count),
+    page: safePage,
+    limit: safeLimit,
   };
 };
 
@@ -98,10 +101,16 @@ const inviteUsers = async (userId, eventId, emails) => {
   if (!event) throw new Error('Event not found');
   if (event.creator_id !== userId) throw new Error('Not authorized to invite users to this event');
 
+  const creator = await UserModel.findUserById(userId);
+  const existingInvites = await InviteModel.findInvitesByEventId(eventId);
   const results = [];
 
   for (const email of emails) {
-    const existingInvites = await InviteModel.findInvitesByEventId(eventId);
+    if (email === creator.email) {
+      results.push({ email, status: 'cannot invite yourself' });
+      continue;
+    }
+
     const alreadyInvited = existingInvites.some((i) => i.email === email);
 
     if (alreadyInvited) {

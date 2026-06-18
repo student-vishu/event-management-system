@@ -1,0 +1,18 @@
+module.exports = {
+  PASSWORD_MIN_LENGTH: 5,
+  NAME_MIN_LENGTH: 2,
+  TITLE_MIN_LENGTH: 2,
+  TITLE_MAX_LENGTH: 100,
+  DESC_MIN_LENGTH: 1,
+  DESC_MAX_LENGTH: 500,
+  LOCATION_MIN_LENGTH: 2,
+  LOCATION_MAX_LENGTH: 100,
+
+  NO_SPACES_REGEX: /^\S+$/,
+  HAS_UPPERCASE_REGEX: /[A-Z]/,
+  HAS_NUMBER_REGEX: /[0-9]/,
+  HAS_SPECIAL_CHAR_REGEX: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+  VALID_TITLE_CHARS_REGEX: /^[a-zA-Z0-9\s\-_,.'!&()]+$/,
+  HAS_LETTER_REGEX: /[a-zA-Z]/,
+  VALID_LOCATION_CHARS_REGEX: /^[a-zA-Z0-9\s\-_,.'()]+$/,
+};

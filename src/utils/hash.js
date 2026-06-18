@@ -1,8 +1,7 @@
 const bcrypt = require('bcryptjs');
+const { HASH } = require('../constants');
 
-const SALT_ROUNDS = 10;
-
-const hashPassword = (password) => bcrypt.hash(password, SALT_ROUNDS);
+const hashPassword = (password) => bcrypt.hash(password, HASH.SALT_ROUNDS);
 
 const comparePassword = (password, hash) => bcrypt.compare(password, hash);
 
