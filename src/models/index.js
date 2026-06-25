@@ -1,7 +1,7 @@
 const sequelize = require('../config/database');
-const { User } = require('./user.model');
-const { Event } = require('./event.model');
-const { Invite } = require('./invite.model');
+const User = require('./user.model');
+const Event = require('./event.model');
+const Invite = require('./invite.model');
 
 User.hasMany(Event, { foreignKey: 'creator_id', onDelete: 'CASCADE' });
 Event.belongsTo(User, { foreignKey: 'creator_id' });

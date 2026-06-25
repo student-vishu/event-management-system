@@ -1,8 +1,8 @@
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const EventModel = require('../models/event.model');
-const InviteModel = require('../models/invite.model');
-const UserModel = require('../models/user.model');
+const EventModel = require('../repositories/event.repository');
+const InviteModel = require('../repositories/invite.repository');
+const UserModel = require('../repositories/user.repository');
 const { validate, createEventSchema, updateEventSchema, inviteUsersSchema } = require('../utils/validators');
 const { EVENT } = require('../constants');
 

@@ -1,5 +1,5 @@
-const UserModel = require('../models/user.model');
-const InviteModel = require('../models/invite.model');
+const UserModel = require('../repositories/user.repository');
+const InviteModel = require('../repositories/invite.repository');
 const { hashPassword, comparePassword } = require('../utils/hash');
 const { generateToken } = require('../utils/jwt');
 const { setWithExpiry, get, del } = require('./redis.service');
