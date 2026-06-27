@@ -1,9 +1,8 @@
-const { QueryTypes } = require('sequelize');
-const sequelize = require('../config/database');
 const EventModel = require('../repositories/event.repository');
 const InviteModel = require('../repositories/invite.repository');
 const UserModel = require('../repositories/user.repository');
 const { validate, createEventSchema, updateEventSchema, inviteUsersSchema } = require('../utils/validators');
+const { notFoundError, forbiddenError } = require('../utils/errors');
 const { EVENT } = require('../constants');
 
 const createEvent = async (userId, { title, description, date, location }) => {
@@ -23,8 +22,8 @@ const updateEvent = async (userId, id, fields) => {
   validate(updateEventSchema, fields);
 
   const event = await EventModel.findEventById(id);
-  if (!event) throw new Error('Event not found');
-  if (event.creator_id !== userId) throw new Error('Not authorized to update this event');
+  if (!event) throw notFoundError('Event not found');
+  if (event.creator_id !== userId) throw forbiddenError('Not authorized to update this event');
 
   return EventModel.updateEvent(id, fields);
 };
@@ -37,45 +36,20 @@ const listEvents = async (userId, { page = EVENT.DEFAULT_PAGE, limit = EVENT.DEF
   const safeSortBy = EVENT.ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : EVENT.DEFAULT_SORT_BY;
   const safeSortOrder = EVENT.ALLOWED_SORT_ORDERS.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : EVENT.DEFAULT_SORT_ORDER;
 
-  const conditions = ['(e.creator_id = :userId OR ei.user_id = :userId)'];
-  const replacements = { userId, limit: safeLimit, offset };
-
-  if (search) {
-    replacements.search = `%${search}%`;
-    conditions.push('(e.title ILIKE :search OR e.description ILIKE :search)');
-  }
-
-  if (dateFrom) {
-    replacements.dateFrom = dateFrom;
-    conditions.push('e.date >= :dateFrom');
-  }
-
-  if (dateTo) {
-    replacements.dateTo = dateTo;
-    conditions.push('e.date <= :dateTo');
-  }
-
-  const where = conditions.join(' AND ');
-
-  const events = await sequelize.query(
-    `SELECT DISTINCT e.* FROM events e
-     LEFT JOIN event_invites ei ON ei.event_id = e.id
-     WHERE ${where}
-     ORDER BY e.${safeSortBy} ${safeSortOrder}
-     LIMIT :limit OFFSET :offset`,
-    { replacements, type: QueryTypes.SELECT }
-  );
-
-  const countResult = await sequelize.query(
-    `SELECT COUNT(DISTINCT e.id) as count FROM events e
-     LEFT JOIN event_invites ei ON ei.event_id = e.id
-     WHERE ${where}`,
-    { replacements, type: QueryTypes.SELECT }
-  );
+  const { events, total } = await EventModel.findAllForUser({
+    userId,
+    safeSortBy,
+    safeSortOrder,
+    safeLimit,
+    offset,
+    search,
+    dateFrom,
+    dateTo,
+  });
 
   return {
     events,
-    total: parseInt(countResult[0].count),
+    total,
     page: safePage,
     limit: safeLimit,
   };
@@ -83,13 +57,13 @@ const listEvents = async (userId, { page = EVENT.DEFAULT_PAGE, limit = EVENT.DEF
 
 const eventDetail = async (userId, id) => {
   const event = await EventModel.findEventById(id);
-  if (!event) throw new Error('Event not found');
+  if (!event) throw notFoundError('Event not found');
 
   const invites = await InviteModel.findInvitesByEventId(id);
   const isCreator = event.creator_id === userId;
   const isInvited = invites.some((i) => i.user_id === userId);
 
-  if (!isCreator && !isInvited) throw new Error('Not authorized to view this event');
+  if (!isCreator && !isInvited) throw forbiddenError('Not authorized to view this event');
 
   return event;
 };
@@ -98,8 +72,8 @@ const inviteUsers = async (userId, eventId, emails) => {
   validate(inviteUsersSchema, { emails });
 
   const event = await EventModel.findEventById(eventId);
-  if (!event) throw new Error('Event not found');
-  if (event.creator_id !== userId) throw new Error('Not authorized to invite users to this event');
+  if (!event) throw notFoundError('Event not found');
+  if (event.creator_id !== userId) throw forbiddenError('Not authorized to invite users to this event');
 
   const creator = await UserModel.findUserById(userId);
   const existingInvites = await InviteModel.findInvitesByEventId(eventId);

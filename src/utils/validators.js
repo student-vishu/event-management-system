@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const { VALIDATION } = require('../constants');
+const { badUserInputError } = require('./errors');
 
 const passwordRule = Joi.string()
   .min(VALIDATION.PASSWORD_MIN_LENGTH)
@@ -74,7 +75,7 @@ const inviteUsersSchema = Joi.object({
 
 const validate = (schema, data) => {
   const { error } = schema.validate(data, { abortEarly: false });
-  if (error) throw new Error(error.details.map((d) => d.message).join(', '));
+  if (error) throw badUserInputError(error.details.map((d) => d.message).join(', '));
 };
 
 module.exports = {

@@ -1,14 +1,15 @@
 const userService = require('../services/user.service');
+const { unauthenticatedError } = require('../utils/errors');
 
 const userResolvers = {
   User: {
-    createdAt: (user) => user.created_at,
-    updatedAt: (user) => user.updated_at,
+    createdAt: (user) => user.created_at ? new Date(user.created_at).toISOString() : null,
+    updatedAt: (user) => user.updated_at ? new Date(user.updated_at).toISOString() : null,
   },
 
   Query: {
     me: (_, __, { user }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw unauthenticatedError('Not authenticated');
       return user;
     },
   },
@@ -19,12 +20,12 @@ const userResolvers = {
     login: (_, args) => userService.login(args),
 
     logout: (_, __, { user }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw unauthenticatedError('Not authenticated');
       return userService.logout(user.token, user.tokenExp);
     },
 
     changePassword: (_, args, { user }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw unauthenticatedError('Not authenticated');
       return userService.changePassword(user.id, args);
     },
 
